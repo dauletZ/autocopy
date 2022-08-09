@@ -5,5 +5,7 @@ def Logger():
         cfg = yaml.safe_load(ymlfile)
     hostname = os.uname()[1]
     folder = "{}{}".format(cfg["server"]["local_endpoint"], cfg["server"]["folder"])
+    if not os.path.exists(f'{folder}/+logs/{hostname}'):
+        os.makedirs(f'{folder}/+logs/{hostname}')
     logging.basicConfig(level=logging.DEBUG,filename=f'{folder}/+logs/{hostname}/sys_{str(date.today()).replace("-","")}.txt', format= "%(asctime)s - %(message)s") #логи
     return
