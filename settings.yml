@@ -1,0 +1,10 @@
+# Path for uploaded files
+server:
+    path: '//192.168.0.10/video' # requierd. a path to the windows server
+    folder: '/Архив' # requierd. a folder on the server
+    local_endpoint: '/home/pi/winserver' # optional. a local endpoint for mount. Default: will create a temp dir.
+
+mountOn: '/media/pi/'
+
+timeouts:
+    poll_interval: 1000 # poll interval between check of mounts
