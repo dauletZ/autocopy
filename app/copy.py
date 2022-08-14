@@ -1,14 +1,21 @@
 
 def getSubdirs(filename):
+    import logging
+    filename = filename.replace("_","")
     if len(filename) >=16:
         code = filename[:5]
-        date = filename[7:15]
-    return date, code
+        date = filename[5:13]
+        return date, code
+    else:
+        logging.error("Failed to get date and code!")
+        code = "00000"
+        date = "00000000"
+        return date, code
 
-def prepareCopy(fullpath, remote):
+def prepareCopy(fullpath, remote,lampnumber):
     import os, logging
-    from app.Log.logger import Logger
-    Logger()
+    from app.Log.loggerforlamp import getLoggerForLamp
+    getLoggerForLamp(remote, lampnumber)
     filename = os.path.split(fullpath)[1]
     date, code = getSubdirs(filename)
     remotefolder = f"{remote}/{date}/{code}"
@@ -27,7 +34,6 @@ def prepareCopy(fullpath, remote):
             break
     logging.info(f"start copy {filename} from {hostname}//{fullpath} to {newfile}")
     os.system(f'cp {fullpath} {newfile}')
-    logging.info(f"Copy file {fullpath} to {newfile}")
     if os.path.isfile(f"{fullpath}"):
         os.remove(f'{fullpath}')
         logging.info(f"File {filename} was copied and removed succesfully")
@@ -36,21 +42,22 @@ def prepareCopy(fullpath, remote):
     return 
 
 
-def CopyingMoviesFromFlash(remote, flash, isBaselevel):
+def CopyingMoviesFromFlash(remote, flash, isBaselevel, lampnum):
     import os, logging
-    from app.Log.logger import Logger
-    Logger()
+    from app.Log.loggerforlamp import getLoggerForLamp
+    lampnumber = lampnum
+    getLoggerForLamp(remote,lampnumber)
     files = os.listdir(flash)
     for file in files:
         fullname = f"{flash}/{file}"
         if file == "logs":
             continue
         if os.path.isdir(fullname) ==True:
-            CopyingMoviesFromFlash(remote, fullname, False)
+            CopyingMoviesFromFlash(remote, fullname, False, lampnumber)
             continue
         if file.endswith('MP4') == False:
             continue
-        prepareCopy(fullname, remote)
+        prepareCopy(fullname, remote, lampnumber)
     if isBaselevel == True:
         if os.path.exists(f"{flash}/umount") == False:
             fileUmount = os.mkdir(f"{flash}/umount")

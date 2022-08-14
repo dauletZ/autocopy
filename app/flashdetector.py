@@ -5,7 +5,7 @@ def FlashDetector(pref, mountedFlash): #pref - путь к флешкам, endpo
     Logger()
     mountDir = os.listdir(pref)
     key = 0
-    newFlash = ""
+    newFlashes = []
     for f in mountedFlash:
         if f not in mountDir:
             logging.info(f"flash {f} isn't active")
@@ -16,8 +16,7 @@ def FlashDetector(pref, mountedFlash): #pref - путь к флешкам, endpo
         key+=1
     for flash in mountDir:
         if flash not in mountedFlash:
-            newFlash = flash
-            mountedFlash.append(newFlash)
-            logging.info(f"Found a new flash! Endpoint:{pref}{newFlash}")
-            break
-    return mountedFlash, newFlash
+            newFlashes.append(flash)
+            mountedFlash.append(flash)
+            logging.info(f"Found a new flash! Endpoint:{pref}{flash}")
+    return mountedFlash, newFlashes

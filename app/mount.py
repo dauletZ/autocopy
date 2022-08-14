@@ -6,10 +6,11 @@ def IsMounted(localfolder):
         return True
     return False
 
-def MountRemoteServer(path, localfolder):
-    import os, logging
+def MountRemoteServer(localfolder):
+    import os, logging, time
     if IsMounted(localfolder) == False:
-        os.popen(f"mount.cifs {path} {localfolder}")
+        os.popen(f"mount {localfolder}")
+        time.sleep(0.2)
         from app.Log.logger import Logger
         Logger()
         logging.info(f"MS server mounted to {localfolder}")
