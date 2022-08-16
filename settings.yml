@@ -5,5 +5,4 @@ server:
 
 mountOn: '/media/pi/'
 
-timeouts:
-    poll_interval: 1000 # poll interval between check of mounts
+

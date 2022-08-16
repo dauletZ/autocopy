@@ -16,8 +16,8 @@ def get_mount(newFlashes):
     mountOn = cfg["mountOn"]
     logging.info(f"Mounted a new flash drive {mountOn}{newFlashes} for copy to {folder}")
     lampnumber = GetLampNumber(f'{mountOn}{newFlashes}')
-    CopyingMoviesFromFlash(folder, f"{mountOn}{newFlashes}", True, lampnumber)
     CopyingLogs(folder,f"{mountOn}{newFlashes}",lampnumber)
+    CopyingMoviesFromFlash(folder, f"{mountOn}{newFlashes}", True, lampnumber)
 
 with open('settings.yml', encoding='utf-8') as ymlfile: # чтение конфига
     cfg = yaml.safe_load(ymlfile)
@@ -27,7 +27,6 @@ MountRemoteServer(cfg["server"]["local_endpoint"])
 Logger()
 logging.info("Running ETP AutoCopyPy v0.1.01")
 logging.info("Using next configuration:")
-logging.info("Poll interval:"+ str((cfg["timeouts"])["poll_interval"]))
 logging.info("Endpoint for flash drives:" + cfg["mountOn"])
 logging.info("Start listening a new USB flashes")
 
@@ -40,7 +39,6 @@ while True:
                 p.map(get_mount, newFlashes)
                 p.close()
                 p.join()
-
 
 
 

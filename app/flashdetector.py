@@ -1,19 +1,21 @@
-
-def FlashDetector(pref, mountedFlash): #pref - путь к флешкам, endpoint к серверу
+def FlashDetector(pref, mountedFlash): #pref - путь к флешкам,
     import os, time, logging
     from app.Log.logger import Logger
     Logger()
     mountDir = os.listdir(pref)
-    key = 0
     newFlashes = []
     for f in mountedFlash:
         if f not in mountDir:
-            logging.info(f"flash {f} isn't active")
             mountedFlash.remove(f)
+            logging.info(f"flash {f} isn't active")
     while mountDir == mountedFlash:
         mountDir = os.listdir(pref)
         time.sleep(0.5)
-        key+=1
+    for dir in mountDir:
+        findmnt = os.popen(f"findmnt {pref}{dir}")
+        res = findmnt.readlines()
+        if len(res) == 0:
+            mountedFlash.append(dir)
     for flash in mountDir:
         if flash not in mountedFlash:
             newFlashes.append(flash)

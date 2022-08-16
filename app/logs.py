@@ -21,8 +21,9 @@ def CopyingLogs(folder,flash,lampnumber):
             os.makedirs(f"{logfolder}", exist_ok=True)
         srfile = f"{logfolder}/{file}"
         serverfile = open(f"{srfile}", "w")
+        logging.info(f"open remote log file {file}")
         serverfile.write(f)
-        logging.info(f"write remote")
+        logging.info(f"write remote log file {file}")
         os.remove(logfile)
         logging.info(f"remove log file {logfile}")
         logging.info(f"log {file} was copied {logfolder} and removed")
