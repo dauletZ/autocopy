@@ -1,4 +1,4 @@
-def CopyingLogs(folder,flash,lampnumber):
+def CopyingLogs(folder,flash,lampnumber, saveFiles):
     import logging, os
     logging.info(f"Copying logs from {flash} to {folder}")
     if not os.path.exists(f"{flash}/logs"):
@@ -24,7 +24,10 @@ def CopyingLogs(folder,flash,lampnumber):
         logging.info(f"open remote log file {file}")
         serverfile.write(f)
         logging.info(f"write remote log file {file}")
-        os.remove(logfile)
-        logging.info(f"remove log file {logfile}")
-        logging.info(f"log {file} was copied {logfolder} and removed")
+        if saveFiles == 'false':
+            os.remove(logfile)
+            logging.info(f"remove log file {logfile}")
+            logging.info(f"log {file} was copied {logfolder} and removed")
+        else:
+            logging.info(f"log {file} was copied {logfolder}")
         return

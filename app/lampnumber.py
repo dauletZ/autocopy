@@ -1,7 +1,5 @@
 def GetLampNumber(newFlash):
     import logging, os
-    from app.Log.logger import Logger
-    Logger()
     lampNumber = "00000"
     files = os.listdir(newFlash)
     for file in files:
