@@ -8,3 +8,6 @@ mountOn: '/media/pi/'
 options:
     same_named_files_replace: 'true'
     save_files_on_device: 'true'
+    cyclic_copy: 'true'
+    available_space: '2250'
+    video_file_max_size: '1,8'
