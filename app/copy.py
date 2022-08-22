@@ -55,7 +55,11 @@ def prepareCopy(fullpath, remote,lampnumber, flash, saveFiles, fileReplace, avai
 
     remotefolder = f"{remote}/{Videopath}"
     if not os.path.exists(remotefolder):
-        os.makedirs(remotefolder)
+        try:
+            os.makedirs(remotefolder)
+        except:
+            logging.error(f"Flash {flash} doesn't active!")
+            return
     hostname = os.uname()[1]
     remotefile = f"{remotefolder}/{filename}"
     newfile = remotefile
