@@ -1,5 +1,5 @@
-def CopyingLogs(folder,flash,lampnumber, saveFiles, logDevpath):
-    import logging, os
+def CopyingLogs(folder,flash,lampnumber, saveFiles, logDevpath, DevLogPath):
+    import logging, os, datetime
     from app.Log.loggerforlamp import getLoggerForLamp
     getLoggerForLamp(folder,lampnumber, logDevpath)
     logging.info(f"Copying logs from {flash} to {folder}")
@@ -13,7 +13,23 @@ def CopyingLogs(folder,flash,lampnumber, saveFiles, logDevpath):
             continue
         if file.endswith("txt") == False:
             continue
-        logfolder = (f"{folder}/20{os.path.splitext(file)[0]}/{lampnumber}")
+        date = f"20{os.path.splitext(file)[0]}"
+        filedate = datetime.datetime(year=int(date[0:4]), month=int(date[4:6]), day=int(date[6:8]))
+        dictPath = {'my_hostname': os.uname()[1], 'dev_nmb': lampnumber,
+                    'cur_date': str(datetime.date.today()).replace("-", ""), 'file_date': date,
+                    'cur_year': datetime.date.today().year, 'cur_mounth': datetime.datetime.now().strftime("%B"),
+                    'cur_day': datetime.datetime.now().strftime('%d'), 'file_year': filedate.year,
+                    'file_mounth': filedate.strftime("%B"),
+                    'file_day': filedate.strftime("%d")}
+
+        words = DevLogPath.split('/')
+        i = 0
+        for word in words:
+            if word in dictPath:
+                words[i] = dictPath[word]
+            i += 1
+        Logpath = "/".join(words)
+        logfolder = (f"{folder}{Logpath}")
         if not os.path.exists(logfolder):
             os.makedirs(logfolder, exist_ok=True)
         logfile = f"{flash}/logs/{file}"

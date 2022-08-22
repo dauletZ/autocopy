@@ -11,7 +11,7 @@ def getSubdirs(filename):
     else:
         logging.error("Failed to get date and code!")
         code = "00000"
-        date = "00000000"
+        date = "20220101"
         return date, code
 
 def oldestFile(path, contCopy,drSpace):
@@ -32,12 +32,28 @@ def oldestFile(path, contCopy,drSpace):
         os.rmdir(oldFolder)
         oldFolder = os.path.dirname(oldFolder)
     return
-def prepareCopy(fullpath, remote,lampnumber, flash, saveFiles, fileReplace, availableSpace, videoMaxSize,cyclicCopy):
-    import os, logging, time
+def prepareCopy(fullpath, remote,lampnumber, flash, saveFiles, fileReplace, availableSpace, videoMaxSize,cyclicCopy, videoPath):
+    import os, logging, time, datetime
     from pathlib import Path
     filename = os.path.split(fullpath)[1]
     date, code = getSubdirs(filename)
-    remotefolder = f"{remote}/{date}/{code}"
+
+    filedate = datetime.datetime(year = int(date[0:4]), month = int(date[4:6]), day = int(date[6:8]))
+    dictPath = {'my_hostname': os.uname()[1], 'dev_nmb': lampnumber,
+                'cur_date': str(datetime.date.today()).replace("-", ""), 'file_date': date,
+                'cur_year': datetime.date.today().year, 'cur_mounth': datetime.datetime.now().strftime("%B"),
+                'cur_day': datetime.datetime.now().strftime('%d'), 'file_year': filedate.year, 'file_mounth': filedate.strftime("%B"),
+                'file_day': filedate.strftime("%d")}
+
+    words = videoPath.split('/')
+    i = 0
+    for word in words:
+        if word in dictPath:
+            words[i] = dictPath[word]
+        i += 1
+    Videopath = "/".join(words)
+
+    remotefolder = f"{remote}/{Videopath}"
     if not os.path.exists(remotefolder):
         os.makedirs(remotefolder)
     hostname = os.uname()[1]
@@ -66,7 +82,7 @@ def prepareCopy(fullpath, remote,lampnumber, flash, saveFiles, fileReplace, avai
         pth = Path(remote)
         drSpace = round(sum(f.stat().st_size for f in pth.glob('**/*') if f.is_file()) / 1024 ** 3, 2)
         logging.info(f"Occupied place on the server: {drSpace} GB")
-        logging.info(f"start copy {filename} from {hostname}{flash} to {ip[0]}/{filenameArchive}/{date}/{code}/{filename}")
+        logging.info(f"start copy {filename} from {hostname}{flash} to {ip[0]}/{filenameArchive}/{Videopath}/{filename}")
         if drSpace >= (availableSpace - videoMaxSize*9):
             if cyclicCopy == "false":
                 logging.info("The server is full. Cyclic copying is disable. Copying has stopped")
@@ -94,7 +110,7 @@ def prepareCopy(fullpath, remote,lampnumber, flash, saveFiles, fileReplace, avai
     return
 
 
-def CopyingMoviesFromFlash(remote, flash, isBaselevel, lampnum, saveFiles, fileReplace, availableSpace, videoMaxSize,cyclicCopy ):
+def CopyingMoviesFromFlash(remote, flash, isBaselevel, lampnum, saveFiles, fileReplace, availableSpace, videoMaxSize,cyclicCopy, videoPath ):
     import os, logging
     lampnumber = lampnum
     files = os.listdir(flash)
@@ -103,11 +119,11 @@ def CopyingMoviesFromFlash(remote, flash, isBaselevel, lampnum, saveFiles, fileR
         if file == "logs":
             continue
         if os.path.isdir(fullname) ==True:
-            CopyingMoviesFromFlash(remote, fullname, False, lampnumber, saveFiles, fileReplace, availableSpace, videoMaxSize,cyclicCopy )
+            CopyingMoviesFromFlash(remote, fullname, False, lampnumber, saveFiles, fileReplace, availableSpace, videoMaxSize,cyclicCopy, videoPath )
             continue
         if file.endswith('MP4') == False and file.endswith('3GP') == False:
             continue
-        prepareCopy(fullname, remote, lampnumber, flash,saveFiles, fileReplace, availableSpace, videoMaxSize,cyclicCopy)
+        prepareCopy(fullname, remote, lampnumber, flash,saveFiles, fileReplace, availableSpace, videoMaxSize,cyclicCopy, videoPath)
     if isBaselevel == True:
         if os.path.exists(flash) == False:
             return

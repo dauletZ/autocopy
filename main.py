@@ -36,6 +36,9 @@ def get_mount(newFlashes):
     lampnumber = GetLampNumber(f'{mountOn}{newFlashes}')
     dictPath = {'my_hostname': os.uname()[1], 'dev_nmb': lampnumber, 'cur_date': str(datetime.date.today()).replace("-",""), 'file_date':'fileDate','cur_year':datetime.date.today().year, 'cur_mounth': datetime.datetime.now().strftime("%B"), 'cur_day': datetime.datetime.now().strftime('%d'), 'file_year': 'fileYear', 'file_mounth': 'fileMounth', 'file_day': 'fileDay'}
     SysLogDevPath = cfg['options']['sys_log_dev_path']
+    videoPath = cfg['options']['video_path']
+    DevLogPath = cfg['options']['dev_log_path']
+
     words = SysLogDevPath.split('/')
     i = 0
     for word in words:
@@ -44,8 +47,8 @@ def get_mount(newFlashes):
         i += 1
     logDevpath = "/".join(words)
     logging.info(f"Mounted a new flash drive {mountOn}{newFlashes} for copy to {folder}")
-    CopyingLogs(folder,f"{mountOn}{newFlashes}",lampnumber, saveFiles, logDevpath)
-    CopyingMoviesFromFlash(folder, f"{mountOn}{newFlashes}", True, lampnumber, saveFiles, fileReplace, availableSpace, videoMaxSize,cyclicCopy)
+    CopyingLogs(folder,f"{mountOn}{newFlashes}",lampnumber, saveFiles, logDevpath, DevLogPath)
+    CopyingMoviesFromFlash(folder, f"{mountOn}{newFlashes}", True, lampnumber, saveFiles, fileReplace, availableSpace, videoMaxSize,cyclicCopy, videoPath)
 
     return
 with open('settings.yml', encoding='utf-8') as ymlfile: # чтение конфига
