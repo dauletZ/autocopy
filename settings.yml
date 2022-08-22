@@ -11,3 +11,7 @@ options:
     cyclic_copy: 'true'
     available_space: '2250'
     video_file_max_size: '1,8'
+    sys_log_path: '/+logs/my_hostname'
+    sys_log_dev_path: '/cur_date/dev_nmb/logs'
+    video_path: '/file_date/dev_nmb/'
+    dev_log_path: '/file_date/dev_nmb/'

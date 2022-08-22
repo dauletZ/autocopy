@@ -1,5 +1,7 @@
-def CopyingLogs(folder,flash,lampnumber, saveFiles):
+def CopyingLogs(folder,flash,lampnumber, saveFiles, logDevpath):
     import logging, os
+    from app.Log.loggerforlamp import getLoggerForLamp
+    getLoggerForLamp(folder,lampnumber, logDevpath)
     logging.info(f"Copying logs from {flash} to {folder}")
     if not os.path.exists(f"{flash}/logs"):
         logging.error("couldn't find logs folder")

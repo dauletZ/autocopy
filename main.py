@@ -1,5 +1,6 @@
 import multiprocessing
-import sys
+import sys, os
+import datetime
 
 import yaml, logging,time
 from app.flashdetector import *
@@ -9,6 +10,7 @@ from app.mount import MountRemoteServer
 from app.copy import CopyingMoviesFromFlash
 from app.logs import CopyingLogs
 from multiprocessing import Pool
+
 
 def get_mount(newFlashes):
     with open('settings.yml', encoding='utf-8') as ymlfile:  # чтение конфига
@@ -28,19 +30,42 @@ def get_mount(newFlashes):
         videoMaxSize = int(cfg['options']['video_file_max_size'])
     else:
         videoMaxSize = 1.8
+
     cyclicCopy = cfg['options']['cyclic_copy']
     mountOn = cfg["mountOn"]
-    logging.info(f"Mounted a new flash drive {mountOn}{newFlashes} for copy to {folder}")
     lampnumber = GetLampNumber(f'{mountOn}{newFlashes}')
-    CopyingLogs(folder,f"{mountOn}{newFlashes}",lampnumber, saveFiles)
+    dictPath = {'my_hostname': os.uname()[1], 'dev_nmb': lampnumber, 'cur_date': str(datetime.date.today()).replace("-",""), 'file_date':'fileDate','cur_year':datetime.date.today().year, 'cur_mounth': datetime.datetime.now().strftime("%B"), 'cur_day': datetime.datetime.now().strftime('%d'), 'file_year': 'fileYear', 'file_mounth': 'fileMounth', 'file_day': 'fileDay'}
+    SysLogDevPath = cfg['options']['sys_log_dev_path']
+    words = SysLogDevPath.split('/')
+    i = 0
+    for word in words:
+        if word in dictPath:
+            words[i] = dictPath[word]
+        i += 1
+    logDevpath = "/".join(words)
+    logging.info(f"Mounted a new flash drive {mountOn}{newFlashes} for copy to {folder}")
+    CopyingLogs(folder,f"{mountOn}{newFlashes}",lampnumber, saveFiles, logDevpath)
     CopyingMoviesFromFlash(folder, f"{mountOn}{newFlashes}", True, lampnumber, saveFiles, fileReplace, availableSpace, videoMaxSize,cyclicCopy)
 
+    return
 with open('settings.yml', encoding='utf-8') as ymlfile: # чтение конфига
     cfg = yaml.safe_load(ymlfile)
 mountOn = cfg["mountOn"]
 
+pathMainLog = cfg['options']["sys_log_path"]
+words = pathMainLog.split('/')
+dictPath = {'my_hostname': os.uname()[1], 'cur_date': str(datetime.date.today()).replace("-", ""),
+            'file_date': 'fileDate', 'cur_year': datetime.date.today().year,
+            'cur_mounth': datetime.datetime.now().strftime("%B"), 'cur_day': datetime.datetime.now().strftime('%d')}
+i=0
+for word in words:
+    if word in dictPath:
+        words[i] = dictPath[word]
+    i+=1
+path = "/".join(words)
+
 MountRemoteServer(cfg["server"]["local_endpoint"])
-Logger()
+Logger(path)
 logging.info("Running ETP AutoCopyPy v0.1.01")
 logging.info("Using next configuration:")
 logging.info("Endpoint for flash drives:" + cfg["mountOn"])
