@@ -6,12 +6,12 @@ server:
 mountOn: '/media/pi/'
 
 options:
-    same_named_files_replace: 'true'
+    same_named_files_replace: 'false'
     save_files_on_device: 'true'
     cyclic_copy: 'true'
-    available_space: '2250'
-    video_file_max_size: '1,8'
-    sys_log_path: '/+logs/my_hostname'
-    sys_log_dev_path: '/cur_date/dev_nmb/logs'
+    available_space: '11'
+    video_file_max_size: '1'
+    sys_log_path: '/+logs/cur_year/cur_mounth/my_hostname/'
+    sys_log_dev_path: '/+logs/cur_year/cur_mounth/Sys_devices/dev_nmb/'
     video_path: '/file_date/dev_nmb/'
-    dev_log_path: '/file_date/dev_nmb/'
+    dev_log_path: '/+logs/file_year/file_mounth/devices/dev_nmb/'

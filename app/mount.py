@@ -12,8 +12,6 @@ def MountRemoteServer(localfolder):
     if IsMounted(localfolder) == False:
         os.popen(f"mount {localfolder}")
         time.sleep(0.2)
-        from app.Log.logger import Logger
-        Logger()
         if IsMounted(localfolder) == True:
             logging.info(f"MS server mounted to {localfolder}")
         else:
