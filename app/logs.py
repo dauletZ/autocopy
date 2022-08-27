@@ -1,5 +1,5 @@
 
-def CopyingLogs(folder,flash,lampnumber, saveFiles, logDevpath, DevLogPath):
+def CopyingLogs(folder, flash, lampnumber, saveFiles, logDevpath, DevLogPath, SysLogPath):
     import logging, os, datetime
     from app.Log.loggerforlamp import getLoggerForLamp
     getLoggerForLamp(folder,lampnumber, logDevpath)

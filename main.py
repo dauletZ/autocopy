@@ -26,8 +26,9 @@ def get_mount(newFlashes):
         availableSpace = int(cfg['options']['available_space'])
     else:
         availableSpace = 2250
-    if cfg['options']['video_file_max_size'].isdigit() == True:
-        videoMaxSize = int(cfg['options']['video_file_max_size'])
+    videoMaxSize = cfg['options']["video_file_max_size"].replace(',', '.')
+    if videoMaxSize.replace('.', '', 1).isdigit() == True:
+        videoMaxSize = float(videoMaxSize)
     else:
         videoMaxSize = 1.8
     cyclicCopy = cfg['options']['cyclic_copy']
@@ -39,6 +40,21 @@ def get_mount(newFlashes):
     SysLogDevPath = cfg['options']['sys_log_dev_path']
     videoPath = cfg['options']['video_path']
     DevLogPath = cfg['options']['dev_log_path']
+    pathMainLog = cfg['options']["sys_log_path"]
+
+    words = pathMainLog.split('/')
+    i = 0
+    for word in words:
+        if word in dictPath:
+            words[i] = dictPath[word]
+        i += 1
+    try:
+        SysLogPath = "/".join(words)
+    except:
+        logging.error("sys_log_path specified incorrectly")
+        exit()
+    if SysLogPath[-1] == '/':
+        SysLogPath = SysLogPath[:-1]
 
     words = SysLogDevPath.split('/')
     i = 0
@@ -50,8 +66,9 @@ def get_mount(newFlashes):
     if logDevpath[-1] == '/':
         logDevpath = logDevpath[:-1]
     logging.info(f"Mounted a new flash drive {mountOn}{newFlashes} for copy to {folder}")
-    CopyingLogs(folder,f"{mountOn}{newFlashes}",lampnumber, saveFiles, logDevpath, DevLogPath)
-    CopyingMoviesFromFlash(folder, f"{mountOn}{newFlashes}", True, lampnumber, saveFiles, fileReplace, availableSpace, videoMaxSize,cyclicCopy, videoPath)
+    CopyingLogs(folder, f"{mountOn}{newFlashes}", lampnumber, saveFiles, logDevpath, DevLogPath, SysLogPath)
+    CopyingMoviesFromFlash(folder, f"{mountOn}{newFlashes}", True, lampnumber, saveFiles, fileReplace, availableSpace,
+                           videoMaxSize, cyclicCopy, videoPath, SysLogPath, logDevpath)
 
     return
 with open('settings.yml', encoding='utf-8') as ymlfile: # чтение конфига
@@ -76,10 +93,12 @@ except:
 if path[-1] == '/':
     path = path[:-1]
 
-MountRemoteServer(cfg["server"]["local_endpoint"])
+local = cfg["server"]["local_endpoint"]
+archive = cfg["server"]["folder"]
+MountRemoteServer(f"{local}")
 Logger(path)
 logging.info("Running ETP AutoCopyPy v0.1.02")
-pth = pathlib.Path(cfg["server"]["local_endpoint"])
+pth = pathlib.Path(f"{local}/{archive}")
 drSpace = round(sum(f.stat().st_size for f in pth.glob('**/*') if f.is_file()) / 1024 ** 3, 2)
 logging.info(f"Occupied place on the server: {drSpace} GB")
 logging.info("Using next configuration:")

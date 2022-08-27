@@ -25,7 +25,6 @@ def oldestFile(path):
         i = oldFile.find(folderName)
         vyvodPath = oldFile[i:]
         try:
-            logging.info("The server is full. Cyclic copy is enable.")
             os.unlink(oldFile)
             logging.info(f"{vyvodPath} deleted")
         except:
@@ -43,8 +42,11 @@ def oldestFile(path):
         return
     except:
         return
-def prepareCopy(fullpath, remote,lampnumber, flash, saveFiles, fileReplace, availableSpace, videoMaxSize,cyclicCopy, videoPath):
+def prepareCopy(fullpath, remote, lampnumber, flash, saveFiles, fileReplace, availableSpace, videoMaxSize, cyclicCopy,
+                videoPath, SysLogPath, logDevpath):
     import os, logging, time, datetime
+    from app.Log.loggerforlamp import getLoggerForLamp
+    from app.Log.logger import Logger
     from pathlib import Path
     filename = os.path.split(fullpath)[1]
     date, code = getSubdirs(filename)
@@ -72,11 +74,7 @@ def prepareCopy(fullpath, remote,lampnumber, flash, saveFiles, fileReplace, avai
 
     remotefolder = f"{remote}{Videopath}"
     if not os.path.exists(remotefolder):
-        try:
             os.makedirs(remotefolder, exist_ok= True)
-        except:
-            logging.error(f"Flash {flash} doesn't active!")
-            return
     hostname = os.uname()[1]
     remotefile = f"{remotefolder}/{filename}"
     newfile = remotefile
@@ -104,8 +102,8 @@ def prepareCopy(fullpath, remote,lampnumber, flash, saveFiles, fileReplace, avai
             logging.info(f"File {newfile} is already exists!")
     pth = Path(remote)
     drSpace = round(sum(f.stat().st_size for f in pth.glob('**/*') if f.is_file()) / 1024 ** 3, 2)
-    logging.info(f"start copy {filename} from //{hostname}{flash} to {ip[0]}/{filenameArchive}{Videopath}/{os.path.split(newfile)[1]}")
     if drSpace >= (availableSpace - videoMaxSize*9):
+        Logger(SysLogPath)
         logging.info(f"Occupied place on the server: {drSpace} GB")
         if cyclicCopy == "false":
             logging.info("The server is full. Cyclic copying is disable. Copying has stopped")
@@ -115,12 +113,14 @@ def prepareCopy(fullpath, remote,lampnumber, flash, saveFiles, fileReplace, avai
             logging.info("")
         else:
             while drSpace>=(availableSpace- videoMaxSize*10):
+                logging.info("The server is full. Cyclic copy is enable.")
                 oldestFile(remote)
         logging.info(f"Occupied place on the server: {drSpace} GB")
+        getLoggerForLamp(remote, lampnumber,logDevpath)
     try:
+        logging.info(f"start copy {filename} from //{hostname}{flash} to {ip[0]}/{filenameArchive}{Videopath}/{os.path.split(newfile)[1]}")
         os.system(f'cp -a {fullpath} {newfile}')
     except:
-        logging.error(f"Flash {flash} doesn't active!")
         return
     if os.path.isfile(f"{fullpath}"):
         if saveFiles == 'false':
@@ -128,42 +128,45 @@ def prepareCopy(fullpath, remote,lampnumber, flash, saveFiles, fileReplace, avai
                 os.remove(f'{fullpath}')
                 logging.info(f"File {filename} was copied and removed succesfully")
             except:
-                logging.error(f"Flash {flash} doesn't active!")
                 return
         else:
             logging.info(f"File {filename} was copied")
     else:
         if os.path.exists(flash) == False:
-            logging.error(f"Flash {flash} doesn't active!")
             return
         logging.error(f"File {filename} doesn't exist!")
     return
 
 
-def CopyingMoviesFromFlash(remote, flash, isBaselevel, lampnum, saveFiles, fileReplace, availableSpace, videoMaxSize,cyclicCopy, videoPath ):
+def CopyingMoviesFromFlash(remote, flash, isBaselevel, lampnum, saveFiles, fileReplace, availableSpace, videoMaxSize,
+                           cyclicCopy, videoPath, SysLogPath, logDevpath):
     import os, logging
+    from app.Log.logger import Logger
     lampnumber = lampnum
-    try:
-        files = os.listdir(flash)
-        for file in files:
-            fullname = f"{flash}/{file}"
-            if file == "logs":
-                continue
-            if os.path.isdir(fullname) ==True:
-                CopyingMoviesFromFlash(remote, fullname, False, lampnumber, saveFiles, fileReplace, availableSpace, videoMaxSize,cyclicCopy, videoPath )
-                continue
-            if file.endswith('MP4') == False and file.endswith('3GP') == False:
-                continue
-            prepareCopy(fullname, remote, lampnumber, flash,saveFiles, fileReplace, availableSpace, videoMaxSize,cyclicCopy, videoPath)
-        if isBaselevel == True:
-            if os.path.exists(flash) == False:
-                return
-            if os.path.isfile(f"{flash}/umount") == False:
-                open(f"{flash}/umount", "w")
-                logging.info(f"'{flash}/umount' was created successfully")
-            else:
-                logging.error("the umount file has already been created")
+    files = os.listdir(flash)
+    for file in files:
+        fullname = f"{flash}/{file}"
+        if file == "logs":
+            continue
+        if os.path.isdir(fullname) ==True:
+            CopyingMoviesFromFlash(remote, fullname, False, lampnumber, saveFiles, fileReplace, availableSpace,
+                                   videoMaxSize, cyclicCopy, videoPath, SysLogPath, logDevpath)
+            continue
+        if file.endswith('MP4') == False and file.endswith('3GP') == False:
+            continue
+        prepareCopy(fullname, remote, lampnumber, flash, saveFiles, fileReplace, availableSpace, videoMaxSize,
+                    cyclicCopy, videoPath, SysLogPath, logDevpath)
+        if os.path.exists(flash) == False:
+            Logger(SysLogPath)
+            logging.error(f"Flash {flash} doesn't active!")
             return
-    except:
-        logging.error(f"Flash {flash} doesn't exit!")
-        return
+    if isBaselevel == True:
+        Logger(SysLogPath)
+        if os.path.exists(flash) == False:
+            return
+        if os.path.isfile(f"{flash}/umount") == False:
+            open(f"{flash}/umount", "w")
+            logging.info(f"'{flash}/umount' was created successfully")
+        else:
+            logging.error("the umount file has already been created")
+    return
