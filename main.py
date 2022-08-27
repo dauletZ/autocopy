@@ -140,14 +140,14 @@ else:
 logging.info("Start listening a new USB flashes")
 
 mountedFlash = []
-while True:
-    mountedFlash, newFlashes = FlashDetector(mountOn, mountedFlash)
-    if newFlashes != []:
-        if __name__ == "__main__":
-            with multiprocessing.Pool(multiprocessing.cpu_count()*3) as p:
-                p.map(get_mount, newFlashes)
-                p.close()
-                p.join()
+if __name__ == "__main__":
+    while True:
+        mountedFlash, newFlashes = FlashDetector(mountOn, mountedFlash)
+        if newFlashes != []:
+                with multiprocessing.Pool(multiprocessing.cpu_count()*3) as p:
+                    p.map(get_mount, newFlashes)
+                    p.close()
+                    p.join()
 
 
 

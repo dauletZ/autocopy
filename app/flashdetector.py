@@ -8,7 +8,8 @@ def FlashDetector(pref, mountedFlash): #pref - путь к флешкам,
     for f in mountedFlash:
         if f not in mountDir:
             mountedFlash.remove(f)
-            logging.info(f"flash {f} isn't active")
+            logging.info(f"Flash {f} isn't active")
+    time.sleep(0.5)
     for dir in mountDir:
         findmnt = os.popen(f"findmnt {pref}{dir}")
         res = findmnt.readlines()
