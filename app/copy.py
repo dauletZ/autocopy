@@ -33,7 +33,7 @@ def oldestFile(path):
         while os.listdir(oldFolder) == []:
             vyvodPath = oldFolder[i:]
             try:
-                os.unlink(oldFolder)
+                os.rmdir(oldFolder)
                 logging.info(f"{vyvodPath} deleted")
                 oldFolder = os.path.dirname(oldFolder)
             except:
@@ -112,9 +112,10 @@ def prepareCopy(fullpath, remote, lampnumber, flash, saveFiles, fileReplace, ava
                 time.sleep(0.5)
             logging.info("")
         else:
+            logging.info("The server is full. Cyclic copy is enable.")
             while drSpace>=(availableSpace- videoMaxSize*10):
-                logging.info("The server is full. Cyclic copy is enable.")
                 oldestFile(remote)
+                drSpace = round(sum(f.stat().st_size for f in pth.glob('**/*') if f.is_file()) / 1024 ** 3, 2)
         logging.info(f"Occupied place on the server: {drSpace} GB")
         getLoggerForLamp(remote, lampnumber,logDevpath)
     try:
@@ -157,8 +158,6 @@ def CopyingMoviesFromFlash(remote, flash, isBaselevel, lampnum, saveFiles, fileR
         prepareCopy(fullname, remote, lampnumber, flash, saveFiles, fileReplace, availableSpace, videoMaxSize,
                     cyclicCopy, videoPath, SysLogPath, logDevpath)
         if os.path.exists(flash) == False:
-            Logger(SysLogPath)
-            logging.error(f"Flash {flash} doesn't active!")
             return
     if isBaselevel == True:
         Logger(SysLogPath)

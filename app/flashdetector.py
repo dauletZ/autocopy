@@ -1,5 +1,5 @@
 def FlashDetector(pref, mountedFlash): #pref - путь к флешкам,
-    import os, time, logging,sys, pathlib
+    import os, time, logging, pathlib
     mountDir = os.listdir(pref)
     newFlashes = []
     while mountDir == mountedFlash:
@@ -12,7 +12,9 @@ def FlashDetector(pref, mountedFlash): #pref - путь к флешкам,
     for dir in mountDir:
         if pathlib.Path(f"{pref}{dir}").is_mount() == False:
             if dir not in mountedFlash:
-                mountedFlash.append(dir)
+                time.sleep(1)
+                if pathlib.Path(f"{pref}{dir}").is_mount() == False:
+                    mountedFlash.append(dir)
     for flash in mountDir:
         if flash not in mountedFlash:
             newFlashes.append(flash)
