@@ -122,6 +122,7 @@ def prepareCopy(fullpath, remote, lampnumber, flash, saveFiles, fileReplace, ava
         logging.info(f"start copy {filename} from //{hostname}{flash} to {ip[0]}/{filenameArchive}{Videopath}/{os.path.split(newfile)[1]}")
         os.system(f'cp -a {fullpath} {newfile}')
     except:
+        logging.info(f'copying {filename} failed')
         return
     if os.path.isfile(f"{fullpath}"):
         if saveFiles == 'false':
