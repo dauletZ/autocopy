@@ -9,10 +9,9 @@ from app.Log.logger import Logger
 from app.mount import MountRemoteServer
 from app.copy import CopyingMoviesFromFlash
 from app.logs import CopyingLogs
-from multiprocessing import Pool
 
 
-def get_mount(newFlashes):
+def get_mount(newFlashes, var):
     with open('settings.yml', encoding='utf-8') as ymlfile:  # чтение конфига
         cfg = yaml.safe_load(ymlfile)
     folder = "{}{}".format(cfg["server"]["local_endpoint"], cfg["server"]["folder"])
@@ -41,6 +40,24 @@ def get_mount(newFlashes):
     videoPath = cfg['options']['video_path']
     DevLogPath = cfg['options']['dev_log_path']
     pathMainLog = cfg['options']["sys_log_path"]
+
+    if newFlashes == "check":
+        mountDir = os.listdir(mountOn)
+        mountedFlash = mountDir
+        while True:
+            mountDir = os.listdir(mountOn)
+            if mountDir!= mountedFlash:
+                if (var>0):
+                    time.sleep(1)
+                    mountedFlash = mountDir
+                    var = 0
+                    break
+                else:
+                    var+=1
+                    return
+
+            time.sleep(0.5)
+
 
     words = pathMainLog.split('/')
     i = 0
@@ -138,14 +155,15 @@ else:
     logging.info("Cyclic copy takes the value only 'true' or 'false'")
     logging.info ("Cyclic copy: false")
 logging.info("Start listening a new USB flashes")
-
 mountedFlash = []
 if __name__ == "__main__":
+    manager = multiprocessing.Manager()
+    var = manager.Value('var',0)
     while True:
-        mountedFlash, newFlashes = FlashDetector(mountOn, mountedFlash)
-        if newFlashes != []:
-                with multiprocessing.Pool(multiprocessing.cpu_count()*3) as p:
-                    p.map(get_mount, newFlashes)
+            with multiprocessing.Pool(multiprocessing.cpu_count()*3) as p:
+                mountedFlash, newFlashes = FlashDetector(mountOn, mountedFlash, )
+                if newFlashes != []:
+                    p.starmap(get_mount, (newFlashes, var))
                     p.close()
                     p.join()
 
