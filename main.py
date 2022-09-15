@@ -172,7 +172,6 @@ if __name__ == "__main__":
                 ret = q.get()
                 rets.append(ret)
 
-
             for proc in jobs:
                 proc.join()
 
