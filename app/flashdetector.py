@@ -1,11 +1,8 @@
 def FlashDetector(pref, mountedFlash): #pref - путь к флешкам,
     import os, time, logging, pathlib
-    import multiprocessing
     mountDir = os.listdir(pref)
     newFlashes = []
     logging.info("dead")
-    if mountedFlash == []:
-        flag = True
     while mountDir == mountedFlash:
         mountDir = os.listdir(pref)
         time.sleep(0.5)
@@ -25,9 +22,5 @@ def FlashDetector(pref, mountedFlash): #pref - путь к флешкам,
             newFlashes.append(flash)
             mountedFlash.append(flash)
             logging.info(f"Found a new flash! Endpoint:{pref}{flash}")
-    if flag == True:
-        for i in range(0, 11 - len(mountedFlash)):
-            mountedFlash.append("check")
-    else:
-        mountedFlash.append("check")
+    newFlashes.append("check")
     return (mountedFlash, newFlashes)

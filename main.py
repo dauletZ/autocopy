@@ -11,9 +11,26 @@ from app.copy import CopyingMoviesFromFlash
 from app.logs import CopyingLogs
 
 
-def get_mount(newFlashes, var):
+def get_mount(newFlashes):
     with open('settings.yml', encoding='utf-8') as ymlfile:  # чтение конфига
         cfg = yaml.safe_load(ymlfile)
+    mountOn = cfg["mountOn"]
+    if newFlashes == "check":
+        mountDir = os.listdir(mountOn)
+        mountedFlash = mountDir
+        while True:
+            mountDir = os.listdir(mountOn)
+            if mountDir!= mountedFlash:
+                logging.info("хана")
+                for flash in mountDir:
+                    if flash not in mountedFlash:
+                        newFlashes = flash
+                        mountedFlash.append(flash)
+                        logging.info(f"Found a new flash! Endpoint:{mountOn}{flash}")
+
+                break
+            time.sleep(1)
+    logging.info(f"ничто {newFlashes}")
     folder = "{}{}".format(cfg["server"]["local_endpoint"], cfg["server"]["folder"])
     fileReplace = cfg["options"]["same_named_files_replace"]
     if fileReplace != 'true' and fileReplace !='false':
@@ -33,7 +50,6 @@ def get_mount(newFlashes, var):
     cyclicCopy = cfg['options']['cyclic_copy']
     if cyclicCopy !='true' and cyclicCopy != 'false':
         cyclicCopy = 'false'
-    mountOn = cfg["mountOn"]
     lampnumber = GetLampNumber(f'{mountOn}{newFlashes}')
     dictPath = {'my_hostname': os.uname()[1], 'dev_nmb': lampnumber, 'cur_date': str(datetime.date.today()).replace("-",""), 'file_date':'fileDate','cur_year':str(datetime.date.today().year), 'cur_mounth': datetime.datetime.now().strftime("%B"), 'cur_day': datetime.datetime.now().strftime('%d'), 'file_year': 'fileYear', 'file_mounth': 'fileMounth', 'file_day': 'fileDay'}
     SysLogDevPath = cfg['options']['sys_log_dev_path']
@@ -41,22 +57,6 @@ def get_mount(newFlashes, var):
     DevLogPath = cfg['options']['dev_log_path']
     pathMainLog = cfg['options']["sys_log_path"]
 
-    if newFlashes == "check":
-        mountDir = os.listdir(mountOn)
-        mountedFlash = mountDir
-        while True:
-            mountDir = os.listdir(mountOn)
-            if mountDir!= mountedFlash:
-                if (var>0):
-                    time.sleep(1)
-                    mountedFlash = mountDir
-                    var = 0
-                    break
-                else:
-                    var+=1
-                    return
-
-            time.sleep(0.5)
 
 
     words = pathMainLog.split('/')
@@ -157,15 +157,23 @@ else:
 logging.info("Start listening a new USB flashes")
 mountedFlash = []
 if __name__ == "__main__":
-    manager = multiprocessing.Manager()
-    var = manager.Value('var',0)
+    jobs = []
+    q = multiprocessing.Queue()
+    rets = []
     while True:
-            with multiprocessing.Pool(multiprocessing.cpu_count()*3) as p:
-                mountedFlash, newFlashes = FlashDetector(mountOn, mountedFlash, )
-                if newFlashes != []:
-                    p.starmap(get_mount, (newFlashes, var))
-                    p.close()
-                    p.join()
+        mountedFlash, newFlashes = FlashDetector(mountOn, mountedFlash, )
+        if newFlashes != []:
+            for i in range(0,len(newFlashes)):
+                enought = newFlashes[i]
+                p = multiprocessing.Process(target = get_mount, args = (enought,))
+                jobs.append(p)
+                p.start()
+            for r in jobs:
+                ret = q.get()
+                rets.append(ret)
+            for proc in jobs:
+                proc.join()
+
 
 
 
