@@ -19,17 +19,27 @@ def get_mount(newFlashes):
         mountDir = os.listdir(mountOn)
         mountedFlash = mountDir
         while True:
+            arrNewFlashes = []
+            n = 10
             mountDir = os.listdir(mountOn)
             if mountDir!= mountedFlash:
-                logging.info("хана")
-                for flash in mountDir:
-                    if flash not in mountedFlash:
-                        newFlashes = flash
-                        mountedFlash.append(flash)
-                        logging.info(f"Found a new flash! Endpoint:{mountOn}{flash}")
-
-                break
-            time.sleep(1)
+                logging.info("хана4")
+                for i in range(0,n):
+                    for f in mountedFlash:
+                        if f not in mountDir:
+                            mountedFlash.remove(f)
+                            logging.info(f"Flash {f} isn't active")
+                    for flash in mountDir:
+                        if flash not in mountedFlash:
+                            arrNewFlashes.append(flash)
+                            mountedFlash.append(flash)
+                            logging.info(f"Found a new flash! Endpoint:{mountOn}{flash}")
+                            n += 5
+                    time.sleep(0.5)
+                for k in arrNewFlashes:
+                    p = multiprocessing.Process(target= get_mount, args= (k,))
+                    p.start()
+                    p.join()
     logging.info(f"ничто {newFlashes}")
     folder = "{}{}".format(cfg["server"]["local_endpoint"], cfg["server"]["folder"])
     fileReplace = cfg["options"]["same_named_files_replace"]
@@ -86,7 +96,6 @@ def get_mount(newFlashes):
     CopyingLogs(folder, f"{mountOn}{newFlashes}", lampnumber, saveFiles, logDevpath, DevLogPath, SysLogPath)
     CopyingMoviesFromFlash(folder, f"{mountOn}{newFlashes}", True, lampnumber, saveFiles, fileReplace, availableSpace,
                            videoMaxSize, cyclicCopy, videoPath, SysLogPath, logDevpath)
-
     return
 with open('settings.yml', encoding='utf-8') as ymlfile: # чтение конфига
     cfg = yaml.safe_load(ymlfile)
@@ -158,21 +167,15 @@ logging.info("Start listening a new USB flashes")
 mountedFlash = []
 if __name__ == "__main__":
     jobs = []
-    q = multiprocessing.Queue()
     rets = []
     while True:
-        mountedFlash, newFlashes = FlashDetector(mountOn, mountedFlash, )
+        mountedFlash, newFlashes = FlashDetector(mountOn, mountedFlash)
         if newFlashes != []:
             for i in range(0,len(newFlashes)):
                 enought = newFlashes[i]
                 p = multiprocessing.Process(target = get_mount, args = (enought,))
                 jobs.append(p)
                 p.start()
-            for r in jobs:
-                ret = q.get()
-                rets.append(ret)
-
-
             for proc in jobs:
                 proc.join()
 

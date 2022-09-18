@@ -2,6 +2,9 @@ def FlashDetector(pref, mountedFlash): #pref - путь к флешкам,
     import os, time, logging, pathlib
     mountDir = os.listdir(pref)
     newFlashes = []
+    flag = False
+    if mountedFlash == []:
+        flag = True
     logging.info("dead")
     while mountDir == mountedFlash:
         mountDir = os.listdir(pref)
@@ -22,5 +25,6 @@ def FlashDetector(pref, mountedFlash): #pref - путь к флешкам,
             newFlashes.append(flash)
             mountedFlash.append(flash)
             logging.info(f"Found a new flash! Endpoint:{pref}{flash}")
-    newFlashes.append("check")
+    if flag == True:
+        newFlashes.append("check")
     return (mountedFlash, newFlashes)
