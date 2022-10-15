@@ -1,7 +1,8 @@
+#!/usr/bin/env python
+
 import multiprocessing
 import sys, os
 import datetime
-
 import yaml, logging,time, pathlib
 from app.flashdetector import *
 from app.lampnumber import *
