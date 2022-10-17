@@ -65,6 +65,8 @@ def get_mount(newFlashes):
     if cyclicCopy !='true' and cyclicCopy != 'false':
         cyclicCopy = 'false'
     lampnumber = GetLampNumber(f'{mountOn}{newFlashes}')
+    if lampnumber == 0:
+        return
     dictPath = {'my_hostname': os.uname()[1], 'dev_nmb': lampnumber, 'cur_date': str(datetime.date.today()).replace("-",""), 'file_date':'fileDate','cur_year':str(datetime.date.today().year), 'cur_mounth': datetime.datetime.now().strftime("%B"), 'cur_day': datetime.datetime.now().strftime('%d'), 'file_year': 'fileYear', 'file_mounth': 'fileMounth', 'file_day': 'fileDay'}
     SysLogDevPath = cfg['options']['sys_log_dev_path']
     videoPath = cfg['options']['video_path']
