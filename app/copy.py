@@ -14,36 +14,9 @@ def getSubdirs(filename):
         date = "20220101"
         return date, code
 
-def oldestFile(path):
-    import os, time
-    import pathlib
-    try:
-        taggedrootdir = pathlib.Path(path)
-        folderName = os.path.split(path)[1]
-        oldFile = str(min([f for f in taggedrootdir.resolve().glob('**/*') if f.is_file()], key=os.path.getctime))
-        oldFolder = os.path.dirname(oldFile)
-        i = oldFile.find(folderName)
-        vyvodPath = oldFile[i:]
-        try:
-            os.unlink(oldFile)
-            logging.info(f"{vyvodPath} deleted")
-        except:
-            time.sleep(1)
-            return
-        while os.listdir(oldFolder) == []:
-            vyvodPath = oldFolder[i:]
-            try:
-                os.rmdir(oldFolder)
-                logging.info(f"{vyvodPath} deleted")
-                oldFolder = os.path.dirname(oldFolder)
-            except:
-                time.sleep(1)
-                return
-        return
-    except:
-        return
-def prepareCopy(fullpath, remote, lampnumber, flash, saveFiles, fileReplace, availableSpace, videoMaxSize, cyclicCopy,
-                videoPath, SysLogPath, logDevpath):
+
+def prepareCopy(fullpath, remote, lampnumber, flash, saveFiles, fileReplace, availableSpace, videoMaxSize,
+                videoPath, logDevpath):
     import os, logging, time, datetime
     from app.Log.loggerforlamp import getLoggerForLamp
     from app.Log.logger import Logger
@@ -102,22 +75,10 @@ def prepareCopy(fullpath, remote, lampnumber, flash, saveFiles, fileReplace, ava
             logging.info(f"File {newfile} is already exists!")
     pth = Path(remote)
     drSpace = round(sum(f.stat().st_size for f in pth.glob('**/*') if f.is_file()) / 1024 ** 3, 2)
-    if drSpace >= (availableSpace - videoMaxSize*9):
-        Logger(SysLogPath)
-        logging.info(f"Occupied place on the server: {drSpace} GB")
-        if cyclicCopy == "false":
-            logging.info("The server is full. Cyclic copying is disable. Copying has stopped")
-            while drSpace>=(availableSpace- videoMaxSize*10):
-                drSpace = round(sum(f.stat().st_size for f in pth.glob('**/*') if f.is_file()) / 1024 ** 3, 2)
-                time.sleep(0.5)
-            logging.info("")
-        else:
-            logging.info("The server is full. Cyclic copy is enable.")
-            while drSpace>=(availableSpace- videoMaxSize*10):
-                oldestFile(remote)
-                drSpace = round(sum(f.stat().st_size for f in pth.glob('**/*') if f.is_file()) / 1024 ** 3, 2)
-        logging.info(f"Occupied place on the server: {drSpace} GB")
-        getLoggerForLamp(remote, lampnumber,logDevpath)
+    while drSpace >= (availableSpace - videoMaxSize * 9):
+        drSpace = round(sum(f.stat().st_size for f in pth.glob('**/*') if f.is_file()) / 1024 ** 3, 2)
+        time.sleep(0.5)
+    getLoggerForLamp(remote, lampnumber,logDevpath)
     try:
         logging.info(f"start copy {filename} from //{hostname}{flash} to {ip[0]}/{filenameArchive}{Videopath}/{os.path.split(newfile)[1]}")
         os.system(f'cp -a {fullpath} {newfile}')
@@ -141,7 +102,7 @@ def prepareCopy(fullpath, remote, lampnumber, flash, saveFiles, fileReplace, ava
 
 
 def CopyingMoviesFromFlash(remote, flash, isBaselevel, lampnum, saveFiles, fileReplace, availableSpace, videoMaxSize,
-                           cyclicCopy, videoPath, SysLogPath, logDevpath):
+                            videoPath, SysLogPath, logDevpath):
     import os, logging
     from app.Log.logger import Logger
     lampnumber = lampnum
@@ -152,12 +113,12 @@ def CopyingMoviesFromFlash(remote, flash, isBaselevel, lampnum, saveFiles, fileR
             continue
         if os.path.isdir(fullname) ==True:
             CopyingMoviesFromFlash(remote, fullname, False, lampnumber, saveFiles, fileReplace, availableSpace,
-                                   videoMaxSize, cyclicCopy, videoPath, SysLogPath, logDevpath)
+                                   videoMaxSize, videoPath, SysLogPath, logDevpath)
             continue
         if file.endswith('MP4') == False and file.endswith('3GP') == False:
             continue
         prepareCopy(fullname, remote, lampnumber, flash, saveFiles, fileReplace, availableSpace, videoMaxSize,
-                    cyclicCopy, videoPath, SysLogPath, logDevpath)
+                    videoPath, logDevpath)
         if os.path.exists(flash) == False:
             return
     if isBaselevel == True:

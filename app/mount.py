@@ -1,6 +1,6 @@
 def IsMounted(localfolder):
     import os
-    com = os.popen("sh -c mount | grep /home/pi/winserver")
+    com = os.popen(f"sh -c mount | grep {localfolder}")
     res = com.readlines()
     com.close()
     if len(res) > 0:

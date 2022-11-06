@@ -12,35 +12,54 @@ from app.mount import MountRemoteServer
 from app.copy import CopyingMoviesFromFlash
 from app.logs import CopyingLogs
 
-def check():
-    mountDir = os.listdir(mountOn)
-    mountedFlash = mountDir
+def checkSize(path, availableSpace, videoMaxSize, SysLogPath, cyclicCopy):
+    import os, time
+    import pathlib
+    from app.Log.logger import Logger
+    pth = pathlib.Path(path)
+    drSpace = round(sum(f.stat().st_size for f in pth.glob('**/*') if f.is_file()) / 1024 ** 3, 2)
     while True:
-        arrNewFlashes = []
-        n = 5
-        mountDir = os.listdir(mountOn)
-        if mountDir != mountedFlash:
-            for i in range(0, n):
-                for f in mountedFlash:
-                    if f not in mountDir:
-                        mountedFlash.remove(f)
-                        logging.info(f"Flash {f} isn't active")
-                for flash in mountDir:
-                    if flash not in mountedFlash:
-                        arrNewFlashes.append(flash)
-                        mountedFlash.append(flash)
-                        logging.info(f"Found a new flash! Endpoint:{mountOn}{flash}")
-                        n += 4
-                time.sleep(0.5)
-            for k in arrNewFlashes:
-                p = multiprocessing.Process(target=get_mount, args=(k,))
-                jobs.append(p)
-                p.start()
-            proc = multiprocessing.Process(target=check, args = ())
-            proc.start()
-            jobs.append(proc)
-            for k in jobs:
-                k.join()
+        while True:
+            if drSpace <= (availableSpace - videoMaxSize * 9):
+                time.sleep(5)
+            else:
+                break
+        if drSpace >= (availableSpace - videoMaxSize*9):
+            Logger(SysLogPath)
+            logging.info(f"Occupied place on the server: {drSpace} GB")
+            if cyclicCopy == "false":
+                logging.info("The server is full. Cyclic copying is disable. Copying has stopped")
+                while drSpace>=(availableSpace- videoMaxSize*10):
+                    drSpace = round(sum(f.stat().st_size for f in pth.glob('**/*') if f.is_file()) / 1024 ** 3, 2)
+                    time.sleep(0.5)
+                logging.info("Сopying resumed")
+            else:
+                logging.info("The server is full. Cyclic copy is enable.")
+                while drSpace>=(availableSpace- videoMaxSize*10):
+                    drSpace = round(sum(f.stat().st_size for f in pth.glob('**/*') if f.is_file()) / 1024 ** 3, 2)
+                    taggedrootdir = pathlib.Path(path)
+                    folderName = os.path.split(path)[1]
+                    oldFile = str(min([f for f in taggedrootdir.resolve().glob('**/*') if f.is_file()], key=os.path.getctime))
+                    oldFolder = os.path.dirname(oldFile)
+                    i = oldFile.find(folderName)
+                    vyvodPath = oldFile[i:]
+                    try:
+                        os.unlink(oldFile)
+                        logging.info(f"{vyvodPath} deleted")
+                    except:
+                        time.sleep(1)
+                        logging.info(f"f{vyvodPath} delete error")
+                    while os.listdir(oldFolder) == []:
+                        vyvodPath = oldFolder[i:]
+                        os.rmdir(oldFolder)
+                        logging.info(f"{vyvodPath} deleted")
+                        oldFolder = os.path.dirname(oldFolder)
+                    drSpace = round(sum(f.stat().st_size for f in pth.glob('**/*') if f.is_file()) / 1024 ** 3, 2)
+            logging.info(f"Occupied place on the server: {drSpace} GB")
+
+
+
+
 def get_mount(newFlashes):
     with open('settings.yml', encoding='utf-8') as ymlfile:  # чтение конфига
         cfg = yaml.safe_load(ymlfile)
@@ -66,14 +85,13 @@ def get_mount(newFlashes):
     if cyclicCopy !='true' and cyclicCopy != 'false':
         cyclicCopy = 'false'
     lampnumber = GetLampNumber(f'{mountOn}{newFlashes}')
+    if lampnumber == "false":
+        return
     dictPath = {'my_hostname': os.uname()[1], 'dev_nmb': lampnumber, 'cur_date': str(datetime.date.today()).replace("-",""), 'file_date':'fileDate','cur_year':str(datetime.date.today().year), 'cur_mounth': datetime.datetime.now().strftime("%B"), 'cur_day': datetime.datetime.now().strftime('%d'), 'file_year': 'fileYear', 'file_mounth': 'fileMounth', 'file_day': 'fileDay'}
     SysLogDevPath = cfg['options']['sys_log_dev_path']
     videoPath = cfg['options']['video_path']
     DevLogPath = cfg['options']['dev_log_path']
     pathMainLog = cfg['options']["sys_log_path"]
-
-
-
     words = pathMainLog.split('/')
     i = 0
     for word in words:
@@ -97,11 +115,14 @@ def get_mount(newFlashes):
     logDevpath = "/".join(words)
     if logDevpath[-1] == '/':
         logDevpath = logDevpath[:-1]
+
     logging.info(f"Mounted a new flash drive {mountOn}{newFlashes} for copy to {folder}")
     CopyingLogs(folder, f"{mountOn}{newFlashes}", lampnumber, saveFiles, logDevpath, DevLogPath, SysLogPath)
     CopyingMoviesFromFlash(folder, f"{mountOn}{newFlashes}", True, lampnumber, saveFiles, fileReplace, availableSpace,
-                           videoMaxSize, cyclicCopy, videoPath, SysLogPath, logDevpath)
+                           videoMaxSize, videoPath, SysLogPath, logDevpath)
     return
+
+
 with open('settings.yml', encoding='utf-8') as ymlfile: # чтение конфига
     cfg = yaml.safe_load(ymlfile)
 mountOn = cfg["mountOn"]
@@ -128,13 +149,14 @@ local = cfg["server"]["local_endpoint"]
 archive = cfg["server"]["folder"]
 MountRemoteServer(f"{local}")
 Logger(path)
-logging.info("Running ETP AutoCopyPy v0.1.04")
+logging.info("Running ETP AutoCopyPy v0.1.05")
 pth = pathlib.Path(f"{local}/{archive}")
 drSpace = round(sum(f.stat().st_size for f in pth.glob('**/*') if f.is_file()) / 1024 ** 3, 2)
 logging.info(f"Occupied place on the server: {drSpace} GB")
 logging.info("Using next configuration:")
 logging.info("Endpoint for flash drives:" + cfg["mountOn"])
 fileReplace = cfg["options"]["same_named_files_replace"]
+folder = "{}{}".format(cfg["server"]["local_endpoint"], cfg["server"]["folder"])
 if fileReplace == 'true' or fileReplace == 'false':
     logging.info("Same named files replace:" + fileReplace)
 else:
@@ -173,6 +195,9 @@ mountedFlash = []
 if __name__ == "__main__":
     jobs = []
     rets = []
+    p = multiprocessing.Process(target=checkSize, args=(folder, float(cfg['options']['available_space']), float(video),cfg['options']['sys_log_dev_path'], cfg['options']['cyclic_copy']))
+    p.start()
+    jobs.append(p)
     while True:
         mountedFlash, newFlashes = FlashDetector(mountOn, mountedFlash)
         if newFlashes != []:
@@ -181,11 +206,9 @@ if __name__ == "__main__":
                 p = multiprocessing.Process(target = get_mount, args = (enought,))
                 jobs.append(p)
                 p.start()
-            process = multiprocessing.Process(target = check(), args = ())
-            jobs.append(process)
-            process.start()
-            for proc in jobs:
-                proc.join()
+            time.sleep(5)
+    for proc in jobs:
+        proc.join()
 
 
 
