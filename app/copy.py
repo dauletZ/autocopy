@@ -1,4 +1,5 @@
 import logging
+import time
 
 
 def getSubdirs(filename):
@@ -21,6 +22,7 @@ def prepareCopy(fullpath, remote, lampnumber, flash, saveFiles, fileReplace, ava
     from app.Log.loggerforlamp import getLoggerForLamp
     from app.Log.logger import Logger
     from pathlib import Path
+    import shutil
     filename = os.path.split(fullpath)[1]
     date, code = getSubdirs(filename)
 
@@ -81,7 +83,7 @@ def prepareCopy(fullpath, remote, lampnumber, flash, saveFiles, fileReplace, ava
     getLoggerForLamp(remote, lampnumber,logDevpath)
     try:
         logging.info(f"start copy {filename} from //{hostname}{flash} to {ip[0]}/{filenameArchive}{Videopath}/{os.path.split(newfile)[1]}")
-        os.system(f'cp -a {fullpath} {newfile}')
+        shutil.copy2(fullpath, newfile)
     except:
         logging.info(f'copying {filename} failed')
         return
@@ -126,8 +128,12 @@ def CopyingMoviesFromFlash(remote, flash, isBaselevel, lampnum, saveFiles, fileR
         if os.path.exists(flash) == False:
             return
         if os.path.isfile(f"{flash}/umount") == False:
-            open(f"{flash}/umount", "w")
-            logging.info(f"'{flash}/umount' was created successfully")
+            try:
+                open(f"{flash}/umount", "w")
+                logging.info(f"'{flash}/umount' was created successfully")
+            except:
+                logging.error("umount file fatal error")
+                return
         else:
             logging.error("the umount file has already been created")
     return

@@ -52,5 +52,5 @@ def CopyingLogs(folder, flash, lampnumber, saveFiles, logDevpath, DevLogPath, Sy
                     logging.info(f"log {file} was copied {logfolder}")
         return
     except:
-        logging.error(f"Flash {flash} doesn't active!")
+        logging.error(f"loging fatal error")
         return

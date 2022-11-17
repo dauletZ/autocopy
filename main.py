@@ -57,8 +57,6 @@ def checkSize(path, availableSpace, videoMaxSize, SysLogPath, cyclicCopy):
             logging.info(f"Occupied place on the server: {drSpace} GB")
 
 
-
-
 def get_mount(newFlashes):
     with open('settings.yml', encoding='utf-8') as ymlfile:  # чтение конфига
         cfg = yaml.safe_load(ymlfile)
