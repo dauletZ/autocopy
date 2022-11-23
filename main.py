@@ -146,7 +146,7 @@ local = cfg["server"]["local_endpoint"]
 archive = cfg["server"]["folder"]
 MountRemoteServer(f"{local}")
 Logger(path)
-logging.info("Running ETP AutoCopyPy v0.1.05")
+logging.info("Running ETP AutoCopyPy v0.1.06")
 pth = pathlib.Path(f"{local}/{archive}")
 drSpace = round(sum(f.stat().st_size for f in pth.glob('**/*') if f.is_file()) / 1024 ** 3, 2)
 logging.info(f"Occupied place on the server: {drSpace} GB")
