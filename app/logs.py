@@ -20,9 +20,9 @@ def CopyingLogs(folder, flash, lampnumber, saveFiles, logDevpath, DevLogPath, Sy
                 filedate = datetime.datetime(year=int(date[0:4]), month=int(date[4:6]), day=int(date[6:8]))
                 dictPath = {'my_hostname': os.uname()[1], 'dev_nmb': lampnumber,
                             'cur_date': str(datetime.date.today()).replace("-", ""), 'file_date': date,
-                            'cur_year': str(datetime.date.today().year), 'cur_mounth': datetime.datetime.now().strftime("%B"),
+                            'cur_year': str(datetime.date.today().year), 'cur_mounth': datetime.datetime.now().strftime('%m'),
                             'cur_day': datetime.datetime.now().strftime('%d'), 'file_year': str(filedate.year),
-                            'file_mounth': filedate.strftime("%B"),
+                            'file_mounth': filedate.strftime("%d"),
                             'file_day': filedate.strftime("%d")}
 
                 words = DevLogPath.split('/')
