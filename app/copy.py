@@ -4,8 +4,8 @@ import time
 
 def getSubdirs(filename):
     import logging
-    filename = filename.replace("_","")
-    if len(filename) >=16:
+    filename = filename.replace("_" , "")
+    if len(filename) >= 16:
         code = filename[:5]
         date = filename[5:13]
         return date, code
@@ -29,8 +29,8 @@ def prepareCopy(fullpath, remote, lampnumber, flash, saveFiles, fileReplace, ava
     filedate = datetime.datetime(year = int(date[0:4]), month = int(date[4:6]), day = int(date[6:8]))
     dictPath = {'my_hostname': os.uname()[1], 'dev_nmb': lampnumber,
                 'cur_date': str(datetime.date.today()).replace("-", ""), 'file_date': date,
-                'cur_year': str(datetime.date.today().year), 'cur_mounth': datetime.datetime.now().strftime("%B"),
-                'cur_day': datetime.datetime.now().strftime('%d'), 'file_year': str(filedate.year), 'file_mounth': filedate.strftime("%B"),
+                'cur_year': str(datetime.date.today().year), 'cur_mounth': datetime.datetime.now().strftime('%m'),
+                'cur_day': datetime.datetime.now().strftime('%d'), 'file_year': str(filedate.year), 'file_mounth': filedate.strftime("%d"),
                 'file_day': filedate.strftime("%d")}
 
     words = videoPath.split('/')
@@ -74,12 +74,17 @@ def prepareCopy(fullpath, remote, lampnumber, flash, saveFiles, fileReplace, ava
                 break
     else:
         if os.path.exists(newfile) == True:
-            logging.info(f"File {newfile} is already exists!")
+            logging.info(f"File {filename} is already exists!")
     pth = Path(remote)
     drSpace = round(sum(f.stat().st_size for f in pth.glob('**/*') if f.is_file()) / 1024 ** 3, 2)
     while drSpace >= (availableSpace - videoMaxSize * 9):
-        drSpace = round(sum(f.stat().st_size for f in pth.glob('**/*') if f.is_file()) / 1024 ** 3, 2)
-        time.sleep(0.5)
+        try:
+            drSpace = round(sum(f.stat().st_size for f in pth.glob('**/*') if f.is_file()) / 1024 ** 3, 2)
+            time.sleep(0.5)
+        except:
+            if not os.path.exists(remotefolder):
+                os.makedirs(remotefolder, exist_ok=True)
+            time.sleep(0.5)
     getLoggerForLamp(remote, lampnumber,logDevpath)
     try:
         logging.info(f"start copy {filename} from //{hostname}{flash} to {ip[0]}/{filenameArchive}{Videopath}/{os.path.split(newfile)[1]}")
@@ -108,7 +113,12 @@ def CopyingMoviesFromFlash(remote, flash, isBaselevel, lampnum, saveFiles, fileR
     import os, logging
     from app.Log.logger import Logger
     lampnumber = lampnum
-    files = os.listdir(flash)
+    try:
+        files = os.listdir(flash)
+    except:
+        Logger(SysLogPath)
+        logging.info("don't find files in flash")
+        return
     for file in files:
         fullname = f"{flash}/{file}"
         if file == "logs":
