@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import multiprocessing
+import signal
 import sys, os
 import datetime
 import yaml, logging,time, pathlib
@@ -10,6 +11,10 @@ from app.Log.logger import Logger
 from app.mount import MountRemoteServer
 from app.copy import CopyingMoviesFromFlash
 from app.logs import CopyingLogs
+
+def handle_exit(seg, frame):
+    print(seg, frame)   # заглушка, чтобы не было предупреждения
+    raise SystemExit
 
 def checkSize(path, availableSpace, videoMaxSize, SysLogPath, cyclicCopy):
     import os, time
@@ -120,15 +125,17 @@ def get_mount(newFlashes):
     return
 
 
+signal.signal(signal.SIGTERM, handle_exit)
 with open('settings.yml', encoding='utf-8') as ymlfile: # чтение конфига
     cfg = yaml.safe_load(ymlfile)
 mountOn = cfg["mountOn"]
 
 pathMainLog = cfg['options']["sys_log_path"]
 words = pathMainLog.split('/')
-dictPath = {'my_hostname': os.uname()[1], 'cur_date': str(datetime.date.today()).replace("-", ""),
-            'file_date': 'fileDate', 'cur_year': str(datetime.date.today().year),
-            'cur_mounth': datetime.datetime.now().strftime("%B"), 'cur_day': datetime.datetime.now().strftime('%d')}
+dictPath = {'my_hostname': os.uname()[1],
+            'cur_date': str(datetime.date.today()).replace("-", ""),
+            'cur_year': str(datetime.date.today().year), 'cur_mounth': datetime.datetime.now().strftime('%m'),
+            'cur_day': datetime.datetime.now().strftime('%d')}
 i=0
 for word in words:
     if word in dictPath:
@@ -146,7 +153,7 @@ local = cfg["server"]["local_endpoint"]
 archive = cfg["server"]["folder"]
 MountRemoteServer(f"{local}")
 Logger(path)
-logging.info("Running ETP AutoCopyPy v0.1.06")
+logging.info("Running ETP AutoCopyPy v0.1.07")
 pth = pathlib.Path(f"{local}/{archive}")
 drSpace = round(sum(f.stat().st_size for f in pth.glob('**/*') if f.is_file()) / 1024 ** 3, 2)
 logging.info(f"Occupied place on the server: {drSpace} GB")
@@ -190,22 +197,26 @@ else:
 logging.info("Start listening a new USB flashes")
 mountedFlash = []
 if __name__ == "__main__":
-    jobs = []
-    rets = []
-    p = multiprocessing.Process(target=checkSize, args=(folder, float(cfg['options']['available_space']), float(video),cfg['options']['sys_log_dev_path'], cfg['options']['cyclic_copy']))
-    p.start()
-    jobs.append(p)
-    while True:
-        mountedFlash, newFlashes = FlashDetector(mountOn, mountedFlash)
-        if newFlashes != []:
-            for i in range(0,len(newFlashes)):
-                enought = newFlashes[i]
-                p = multiprocessing.Process(target = get_mount, args = (enought,))
-                jobs.append(p)
-                p.start()
-            time.sleep(5)
-    for proc in jobs:
-        proc.join()
-
-
-
+    try:
+        jobs = []
+        p = multiprocessing.Process(target=checkSize, args=(folder, float(cfg['options']['available_space']), float(video),path, cfg['options']['cyclic_copy']))
+        p.start()
+        jobs.append(p)
+        while True:
+            mountedFlash, newFlashes = FlashDetector(mountOn, mountedFlash)
+            if newFlashes != []:
+                for i in range(0,len(newFlashes)):
+                    enought = newFlashes[i]
+                    p = multiprocessing.Process(target = get_mount, args = (enought,))
+                    jobs.append(p)
+                    p.start()
+                time.sleep(5)
+            for proc in jobs:
+                if not proc.is_alive():
+                    p = proc.exitcode
+                    if p == 0:
+                        proc.kill()
+        for proc in jobs:
+            proc.join()
+    except(KeyboardInterrupt, SystemExit):
+        exit()
