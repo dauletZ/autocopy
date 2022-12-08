@@ -49,7 +49,7 @@ def checkSize(path, availableSpace, videoMaxSize, SysLogPath, cyclicCopy):
                     vyvodPath = oldFile[i:]
                     try:
                         os.unlink(oldFile)
-                        logging.info(f"{vyvodPath} deleted")
+                        logging.info(f"{vyvodPath} delete")
                     except:
                         time.sleep(1)
                         logging.info(f"f{vyvodPath} delete error")
